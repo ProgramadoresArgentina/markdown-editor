@@ -5,7 +5,21 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogDescription, 
+  DialogFooter, 
+  DialogHeader, 
+  DialogTitle 
+} from '@/components/ui/dialog';
 import { marked } from 'marked';
+import { ArticleSuggestions, useArticleSuggestions } from '@/components/article-suggestions';
+import { FileSidebar } from '@/components/file-sidebar';
+import { TourGuide } from '@/components/tour-guide';
+import { FileManager, type SavedFile } from '@/lib/file-manager';
+import { useTour } from '@/lib/use-tour';
+import type { Article } from '@/lib/minio-client';
 import { 
   Bold, 
   Italic, 
@@ -24,7 +38,10 @@ import {
   Heading1,
   Heading2,
   Heading3,
-  Quote
+  Quote,
+  Undo,
+  Redo,
+  HelpCircle
 } from 'lucide-react';
 
 interface MarkdownEditorProps {
@@ -33,7 +50,16 @@ interface MarkdownEditorProps {
 
 export default function MarkdownEditor({ className }: MarkdownEditorProps) {
   const [showPreview, setShowPreview] = useState(true);
-  const [markdownContent, setMarkdownContent] = useState(`# ¡Bienvenido al Editor de Markdown!
+  
+  // Cargar contenido guardado desde localStorage o usar template por defecto
+  const [markdownContent, setMarkdownContent] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const savedContent = localStorage.getItem('markdown-content');
+      if (savedContent) {
+        return savedContent;
+      }
+    }
+    return `# ¡Bienvenido al Editor de Markdown!
 
 Este es un **editor de texto** con soporte completo para Markdown.
 
@@ -66,7 +92,8 @@ function saludar(nombre) {
 
 ---
 
-*¡Disfruta escribiendo!*`);
+*¡Disfruta escribiendo!*`;
+  });
   
   const [previewContent, setPreviewContent] = useState('');
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -75,6 +102,89 @@ function saludar(nombre) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const ghostTextRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Estado para deshacer/rehacer
+  const [history, setHistory] = useState<string[]>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
+  const [isUndoRedoAction, setIsUndoRedoAction] = useState(false);
+
+  // Estado para manejo de archivos múltiples
+  const [savedFiles, setSavedFiles] = useState<SavedFile[]>([]);
+  const [currentFileId, setCurrentFileId] = useState<string | null>(null);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [showLoadConfirm, setShowLoadConfirm] = useState<{
+    isOpen: boolean;
+    file: SavedFile | null;
+  }>({ isOpen: false, file: null });
+
+  // Hook para las sugerencias de artículos
+  const {
+    showSuggestions: showArticleSuggestions,
+    suggestionQuery: articleQuery,
+    suggestionPosition,
+    handleAtSymbol,
+    insertArticleReference
+  } = useArticleSuggestions();
+
+  // Hook para el tour
+  const {
+    runTour,
+    startTour,
+    completeTour
+  } = useTour();
+
+  // Funciones para deshacer/rehacer
+  const addToHistory = useCallback((content: string) => {
+    if (isUndoRedoAction) return;
+    
+    setHistory(prev => {
+      const newHistory = prev.slice(0, historyIndex + 1);
+      newHistory.push(content);
+      
+      // Limitar el historial a 50 entradas para evitar problemas de memoria
+      if (newHistory.length > 50) {
+        newHistory.shift();
+        setHistoryIndex(prev => Math.max(0, prev));
+        return newHistory;
+      }
+      
+      setHistoryIndex(newHistory.length - 1);
+      return newHistory;
+    });
+  }, [historyIndex, isUndoRedoAction]);
+
+  const undo = useCallback(() => {
+    if (historyIndex > 0) {
+      setIsUndoRedoAction(true);
+      const previousContent = history[historyIndex - 1];
+      setMarkdownContent(previousContent);
+      setHistoryIndex(prev => prev - 1);
+      
+      // Enfocar el textarea después del undo
+      setTimeout(() => {
+        textareaRef.current?.focus();
+        setIsUndoRedoAction(false);
+      }, 0);
+    }
+  }, [history, historyIndex]);
+
+  const redo = useCallback(() => {
+    if (historyIndex < history.length - 1) {
+      setIsUndoRedoAction(true);
+      const nextContent = history[historyIndex + 1];
+      setMarkdownContent(nextContent);
+      setHistoryIndex(prev => prev + 1);
+      
+      // Enfocar el textarea después del redo
+      setTimeout(() => {
+        textareaRef.current?.focus();
+        setIsUndoRedoAction(false);
+      }, 0);
+    }
+  }, [history, historyIndex]);
+
+  const canUndo = historyIndex > 0;
+  const canRedo = historyIndex < history.length - 1;
 
   // Diccionario básico para corrección ortográfica
   const spanishWords = useMemo(() => new Set([
@@ -113,6 +223,23 @@ function saludar(nombre) {
     });
     
   }, [spanishWords]);
+
+  // Cargar archivos guardados al inicializar
+  useEffect(() => {
+    const files = FileManager.getAllFiles();
+    setSavedFiles(files);
+    
+    const currentId = FileManager.getCurrentFileId();
+    setCurrentFileId(currentId);
+  }, []);
+
+  // Inicializar historial con el contenido inicial
+  useEffect(() => {
+    if (history.length === 0 && markdownContent) {
+      setHistory([markdownContent]);
+      setHistoryIndex(0);
+    }
+  }, [markdownContent, history.length]);
 
   // Actualizar vista previa cuando cambie el contenido
   useEffect(() => {
@@ -429,13 +556,33 @@ function saludar(nombre) {
     }
   };
 
+  // Ref para el timeout del historial
+  const historyTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   // Manejar cambios en el textarea
   const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newContent = e.target.value;
     const cursorPos = e.target.selectionStart;
     
     setMarkdownContent(newContent);
+    
+    // Agregar al historial solo si no es una acción de deshacer/rehacer
+    if (!isUndoRedoAction) {
+      // Limpiar timeout anterior
+      if (historyTimeoutRef.current) {
+        clearTimeout(historyTimeoutRef.current);
+      }
+      
+      // Usar un debounce para evitar agregar cada caracter al historial
+      historyTimeoutRef.current = setTimeout(() => {
+        addToHistory(newContent);
+      }, 1000);
+    }
+    
     generateSuggestions(newContent, cursorPos);
+    
+    // Manejar sugerencias de artículos con @
+    handleAtSymbol(newContent, cursorPos, textareaRef);
   };
 
   // Manejar cambios en la posición del cursor
@@ -443,11 +590,28 @@ function saludar(nombre) {
     const textarea = e.target as HTMLTextAreaElement;
     const cursorPos = textarea.selectionStart;
     generateSuggestions(markdownContent, cursorPos);
+    
+    // También manejar sugerencias de artículos al mover el cursor
+    handleAtSymbol(markdownContent, cursorPos, textareaRef);
   };
 
   // Manejar atajos de teclado
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      // Atajos de deshacer/rehacer
+      if (event.ctrlKey || event.metaKey) {
+        if (event.key === 'z' && !event.shiftKey) {
+          event.preventDefault();
+          undo();
+          return;
+        }
+        if ((event.key === 'y') || (event.key === 'z' && event.shiftKey)) {
+          event.preventDefault();
+          redo();
+          return;
+        }
+      }
+
       if (suggestions.length === 0) return;
 
       switch (event.key) {
@@ -524,20 +688,117 @@ function saludar(nombre) {
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [suggestions, suggestionIndex, markdownContent]);
+  }, [suggestions, suggestionIndex, markdownContent, undo, redo]);
 
-  // Funciones de archivo
-  const handleSave = () => {
-    localStorage.setItem('markdown-content', markdownContent);
-    alert('Contenido guardado localmente');
+  // Función para manejar la selección de artículos
+  const handleArticleSelect = (article: Article) => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      const cursorPos = textarea.selectionStart;
+      insertArticleReference(
+        article,
+        markdownContent,
+        cursorPos,
+        setMarkdownContent,
+        (newPos: number) => {
+          textarea.selectionStart = textarea.selectionEnd = newPos;
+          textarea.focus();
+        }
+      );
+    }
   };
+
+  // Funciones para manejo de archivos múltiples
+  const handleFileSelect = (file: SavedFile) => {
+    if (markdownContent !== file.content) {
+      setShowLoadConfirm({ isOpen: true, file });
+    }
+  };
+
+  const handleConfirmLoadFile = () => {
+    if (showLoadConfirm.file) {
+      setMarkdownContent(showLoadConfirm.file.content);
+      setCurrentFileId(showLoadConfirm.file.id);
+      FileManager.setCurrentFileId(showLoadConfirm.file.id);
+      
+      // Reiniciar historial con el nuevo contenido
+      setHistory([showLoadConfirm.file.content]);
+      setHistoryIndex(0);
+      
+      setShowLoadConfirm({ isOpen: false, file: null });
+    }
+  };
+
+  const handleFileDelete = (fileId: string) => {
+    FileManager.deleteFile(fileId);
+    const updatedFiles = FileManager.getAllFiles();
+    setSavedFiles(updatedFiles);
+    
+    // Si el archivo eliminado era el actual, limpiar la referencia
+    if (currentFileId === fileId) {
+      setCurrentFileId(null);
+      FileManager.setCurrentFileId(null);
+    }
+  };
+
+  const handleSaveAsNew = () => {
+    const title = FileManager.extractTitle(markdownContent);
+    const newFile = FileManager.saveFile({
+      title,
+      content: markdownContent
+    });
+    
+    const updatedFiles = FileManager.getAllFiles();
+    setSavedFiles(updatedFiles);
+    setCurrentFileId(newFile.id);
+    FileManager.setCurrentFileId(newFile.id);
+    
+    alert(`Archivo guardado como: ${title}`);
+  };
+
+  const handleUpdateCurrent = () => {
+    if (currentFileId) {
+      const title = FileManager.extractTitle(markdownContent);
+      FileManager.updateFile(currentFileId, {
+        title,
+        content: markdownContent
+      });
+      
+      const updatedFiles = FileManager.getAllFiles();
+      setSavedFiles(updatedFiles);
+      alert('Archivo actualizado');
+    } else {
+      handleSaveAsNew();
+    }
+  };
+
+  // Funciones de archivo (legacy)
+  const handleSave = () => {
+    handleUpdateCurrent();
+  };
+
+  // Auto-guardar contenido cada vez que cambie
+  useEffect(() => {
+    if (markdownContent && typeof window !== 'undefined') {
+      localStorage.setItem('markdown-content', markdownContent);
+    }
+  }, [markdownContent]);
+
+  // Limpiar timeout al desmontar el componente
+  useEffect(() => {
+    return () => {
+      if (historyTimeoutRef.current) {
+        clearTimeout(historyTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleExport = () => {
     const blob = new Blob([markdownContent], { type: 'text/markdown' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'documento.md';
+    a.download = 'article.md';
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -582,35 +843,61 @@ function saludar(nombre) {
 
 
   return (
-    <div className={`flex flex-col h-screen bg-gray-50 ${className}`}>
+    <div className={`flex flex-col h-screen bg-gray-50 tour-welcome ${className}`}>
       {/* Barra de herramientas */}
-      <div className="bg-white border-b border-gray-200 p-4">
+      <div className="sticky top-0 z-50 bg-white border-b border-gray-200 p-4 shadow-sm">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <Button variant="outline" size="sm" onClick={() => makeHeader(1)}>
-              <Heading1 className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => makeHeader(2)}>
-              <Heading2 className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => makeHeader(3)}>
-              <Heading3 className="h-4 w-4" />
-            </Button>
+            {/* Botones de deshacer/rehacer */}
+            <div className="tour-undo-redo flex items-center space-x-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={undo}
+                disabled={!canUndo}
+                title="Deshacer (Ctrl+Z)"
+              >
+                <Undo className="h-4 w-4" />
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={redo}
+                disabled={!canRedo}
+                title="Rehacer (Ctrl+Y)"
+              >
+                <Redo className="h-4 w-4" />
+              </Button>
+            </div>
             
             <Separator orientation="vertical" className="h-6" />
             
-            <Button variant="outline" size="sm" onClick={toggleBold}>
-              <Bold className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" size="sm" onClick={toggleItalic}>
-              <Italic className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" size="sm" onClick={toggleStrike}>
-              <Strikethrough className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" size="sm" onClick={toggleCode}>
-              <Code className="h-4 w-4" />
-            </Button>
+            <div className="tour-formatting flex items-center space-x-2">
+              <Button variant="outline" size="sm" onClick={() => makeHeader(1)}>
+                <Heading1 className="h-4 w-4" />
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => makeHeader(2)}>
+                <Heading2 className="h-4 w-4" />
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => makeHeader(3)}>
+                <Heading3 className="h-4 w-4" />
+              </Button>
+              
+              <Separator orientation="vertical" className="h-6" />
+              
+              <Button variant="outline" size="sm" onClick={toggleBold}>
+                <Bold className="h-4 w-4" />
+              </Button>
+              <Button variant="outline" size="sm" onClick={toggleItalic}>
+                <Italic className="h-4 w-4" />
+              </Button>
+              <Button variant="outline" size="sm" onClick={toggleStrike}>
+                <Strikethrough className="h-4 w-4" />
+              </Button>
+              <Button variant="outline" size="sm" onClick={toggleCode}>
+                <Code className="h-4 w-4" />
+              </Button>
+            </div>
             
             <Separator orientation="vertical" className="h-6" />
             
@@ -638,18 +925,27 @@ function saludar(nombre) {
           </div>
           
           <div className="flex items-center space-x-2">
-            <Button variant="outline" size="sm" onClick={handleSave}>
-              <Save className="h-4 w-4 mr-2" />
-              Guardar
-            </Button>
-            <Button variant="outline" size="sm" onClick={handleExport}>
-              <Download className="h-4 w-4 mr-2" />
-              Exportar
-            </Button>
-            <Button variant="outline" size="sm" onClick={handleImport}>
-              <Upload className="h-4 w-4 mr-2" />
-              Importar
-            </Button>
+            <div className="tour-save-buttons flex items-center space-x-2">
+              <Button variant="outline" size="sm" onClick={handleSave}>
+                <Save className="h-4 w-4 mr-2" />
+                {currentFileId ? 'Actualizar' : 'Guardar'}
+              </Button>
+              {currentFileId && (
+                <Button variant="outline" size="sm" onClick={handleSaveAsNew}>
+                  <Save className="h-4 w-4 mr-2" />
+                  Guardar como nuevo
+                </Button>
+              )}
+              <Button variant="outline" size="sm" onClick={handleExport}>
+                <Download className="h-4 w-4 mr-2" />
+                Exportar
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleImport}>
+                <Upload className="h-4 w-4 mr-2" />
+                Importar
+              </Button>
+            </div>
+            
             <Button 
               variant="outline" 
               size="sm" 
@@ -658,6 +954,16 @@ function saludar(nombre) {
               {showPreview ? <EyeOff className="h-4 w-4 mr-2" /> : <Eye className="h-4 w-4 mr-2" />}
               {showPreview ? 'Ocultar' : 'Vista previa'}
             </Button>
+            
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={startTour}
+              title="Ver tour de funciones"
+              className="tour-tour-button"
+            >
+              <HelpCircle className="h-4 w-4" />
+            </Button>
           </div>
         </div>
       </div>
@@ -665,8 +971,8 @@ function saludar(nombre) {
       {/* Área principal */}
       <div className="flex-1 flex">
         {/* Editor */}
-        <div className={`flex-1 ${showPreview ? 'w-1/2' : 'w-full'} relative`}>
-          <Card className="h-full m-4">
+        <div className={`flex-1 ${showPreview ? 'w-1/2' : sidebarCollapsed ? 'w-full' : 'w-3/4'} relative`}>
+          <Card className="h-full m-4 tour-editor">
             <div className="relative h-full">
               <div className="relative w-full h-full">
                 <Textarea
@@ -709,7 +1015,7 @@ function saludar(nombre) {
 
         {/* Vista previa */}
         {showPreview && (
-          <div className="w-1/2">
+          <div className="w-1/2 tour-preview">
             <Card className="h-full m-4 p-0">
               <div 
                 className="preview-content prose prose-sm max-w-none h-full"
@@ -718,7 +1024,71 @@ function saludar(nombre) {
             </Card>
           </div>
         )}
+
+        {/* Sidebar de archivos */}
+        <div className="tour-file-sidebar">
+          <FileSidebar
+            files={savedFiles}
+            currentFileId={currentFileId}
+            onFileSelect={handleFileSelect}
+            onFileDelete={handleFileDelete}
+            isCollapsed={sidebarCollapsed}
+            onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+          />
+        </div>
       </div>
+
+      {/* Sugerencias de artículos */}
+      {showArticleSuggestions && (
+        <div
+          className="fixed z-50"
+          style={{
+            top: suggestionPosition.top,
+            left: suggestionPosition.left,
+          }}
+        >
+          <ArticleSuggestions
+            onSelect={handleArticleSelect}
+            query={articleQuery}
+            visible={showArticleSuggestions}
+          />
+        </div>
+      )}
+
+      {/* Modal de confirmación para cargar archivo */}
+      <Dialog open={showLoadConfirm.isOpen} onOpenChange={(open) => 
+        setShowLoadConfirm({ isOpen: open, file: null })
+      }>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>¿Cargar archivo?</DialogTitle>
+            <DialogDescription>
+              ¿Estás seguro de que quieres cargar &quot;{showLoadConfirm.file?.title}&quot;? 
+              Los cambios no guardados en el editor actual se perderán.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowLoadConfirm({ isOpen: false, file: null })}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleConfirmLoadFile}
+            >
+              Cargar archivo
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Componente del tour */}
+      <TourGuide
+        run={runTour}
+        onTourEnd={completeTour}
+        onTourSkip={completeTour}
+      />
 
       {/* Input oculto para importar archivos */}
       <input
