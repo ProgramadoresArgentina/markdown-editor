@@ -820,3 +820,129 @@
     font-size: 2.5rem;
   }
 }
+
+/* Estilos específicos para móvil */
+@media (max-width: 900px), (max-height: 600px) {
+  /* Ocultar scrollbars en móvil para mejor UX */
+  .mobile-scroll::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .mobile-scroll {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  /* Mejorar el touch en botones móviles */
+  .mobile-touch {
+    min-height: 44px;
+    min-width: 44px;
+    touch-action: manipulation;
+  }
+  
+  /* Espaciado mejorado para móvil */
+  .mobile-spacing {
+    padding: 0.75rem;
+  }
+  
+  /* Texto más legible en móvil */
+  .mobile-text {
+    font-size: 16px;
+    line-height: 1.5;
+  }
+  
+  /* Prevenir zoom en inputs en iOS */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  textarea {
+    font-size: 16px;
+  }
+  
+  /* Mejorar la experiencia del teclado virtual */
+  .keyboard-adjust {
+    padding-bottom: env(keyboard-inset-height, 0);
+  }
+}
+
+/* Estilos para el menú móvil */
+.mobile-menu-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 40;
+  backdrop-filter: blur(4px);
+}
+
+.mobile-menu-content {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  z-index: 50;
+  transform: translateY(-100%);
+  transition: transform 0.3s ease;
+}
+
+.mobile-menu-content.open {
+  transform: translateY(0);
+}
+
+/* Animaciones suaves para transiciones móviles */
+@media (max-width: 900px), (max-height: 600px) {
+  .mobile-transition {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  /* Mejorar el rendimiento en móvil */
+  .mobile-optimized {
+    will-change: transform;
+    backface-visibility: hidden;
+    transform: translateZ(0);
+  }
+}
+
+/* Estilos para el tour en móvil */
+@media (max-width: 900px), (max-height: 600px) {
+  .__floater__body {
+    max-width: 90vw !important;
+    font-size: 14px !important;
+  }
+  
+  .__floater__content {
+    padding: 12px !important;
+  }
+  
+  .__floater__footer {
+    padding: 8px 12px !important;
+  }
+  
+  .__floater__footer button {
+    font-size: 13px !important;
+    padding: 8px 12px !important;
+    min-width: 60px !important;
+  }
+}
+
+/* Mejoras para el sidebar en móvil */
+@media (max-width: 900px), (max-height: 600px) {
+  .file-sidebar-mobile {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 45;
+    background: white;
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+  }
+  
+  .file-sidebar-mobile.open {
+    transform: translateX(0);
+  }
+}

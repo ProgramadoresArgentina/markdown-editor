@@ -41,7 +41,9 @@ import {
   Quote,
   Undo,
   Redo,
-  HelpCircle
+  HelpCircle,
+  Menu,
+  X
 } from 'lucide-react';
 
 interface MarkdownEditorProps {
@@ -116,6 +118,11 @@ function saludar(nombre) {
     isOpen: boolean;
     file: SavedFile | null;
   }>({ isOpen: false, file: null });
+
+  // Estados para responsive/mobile
+  const [isMobile, setIsMobile] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileView, setMobileView] = useState<'editor' | 'preview' | 'files'>('editor');
 
   // Hook para las sugerencias de artículos
   const {
@@ -223,6 +230,38 @@ function saludar(nombre) {
     });
     
   }, [spanishWords]);
+
+  // Detectar si es móvil y manejar resize
+  useEffect(() => {
+    const checkMobile = () => {
+      // Detección más robusta de móvil
+      const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      const isSmallScreen = window.innerWidth <= 900 || window.innerHeight <= 600;
+      const mobile = isMobileDevice || isSmallScreen;
+      
+      setIsMobile(mobile);
+      
+      console.log('Mobile detection:', { 
+        width: window.innerWidth, 
+        height: window.innerHeight, 
+        userAgent: navigator.userAgent,
+        isMobileDevice,
+        isSmallScreen,
+        isMobile: mobile 
+      });
+      
+      // En móvil, colapsar sidebar por defecto
+      if (mobile) {
+        setSidebarCollapsed(true);
+        setMobileMenuOpen(false);
+      }
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Cargar archivos guardados al inicializar
   useEffect(() => {
@@ -499,6 +538,11 @@ function saludar(nombre) {
       textarea.selectionStart = textarea.selectionEnd = start + textToInsert.length;
       textarea.focus();
     }, 0);
+
+    // Cerrar menú móvil después de usar herramienta
+    if (isMobile) {
+      setMobileMenuOpen(false);
+    }
   };
 
   // Función para envolver texto seleccionado
@@ -531,6 +575,11 @@ function saludar(nombre) {
         textarea.focus();
       }, 0);
     }
+
+    // Cerrar menú móvil después de usar herramienta
+    if (isMobile) {
+      setMobileMenuOpen(false);
+    }
   };
 
   // Función para convertir línea a header
@@ -553,6 +602,11 @@ function saludar(nombre) {
       setTimeout(() => {
         textarea.focus();
       }, 0);
+    }
+
+    // Cerrar menú móvil después de usar herramienta
+    if (isMobile) {
+      setMobileMenuOpen(false);
     }
   };
 
@@ -712,6 +766,9 @@ function saludar(nombre) {
   const handleFileSelect = (file: SavedFile) => {
     if (markdownContent !== file.content) {
       setShowLoadConfirm({ isOpen: true, file });
+    } else if (isMobile) {
+      // En móvil, cambiar automáticamente al editor después de seleccionar
+      setMobileView('editor');
     }
   };
 
@@ -845,9 +902,71 @@ function saludar(nombre) {
   return (
     <div className={`flex flex-col h-screen bg-gray-50 tour-welcome ${className}`}>
       {/* Barra de herramientas */}
-      <div className="sticky top-0 z-50 bg-white border-b border-gray-200 p-4 shadow-sm">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
+      <div className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
+        <div className="p-2 md:p-4">
+          {/* Móvil: Menú hamburguesa y controles básicos */}
+          {isMobile ? (
+            <div className="space-y-2">
+              {/* Primera fila: Menú y botones de vista */}
+              <div className="flex items-center justify-between">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                  className="mobile-touch flex items-center space-x-1 px-3 py-2"
+                >
+                  {mobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+                  <span className="text-xs font-medium">Herramientas</span>
+                </Button>
+                
+                <div className="flex items-center space-x-1">
+                  <Button variant="outline" size="sm" onClick={handleSave} className="mobile-touch px-3 py-2">
+                    <Save className="h-4 w-4 mr-1" />
+                    <span className="text-xs">Guardar</span>
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={startTour}
+                    className="tour-tour-button mobile-touch px-2 py-2"
+                  >
+                    <HelpCircle className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+              
+              {/* Segunda fila: Botones de vista móvil */}
+              <div className="flex items-center justify-center space-x-1 bg-gray-50 rounded-lg p-1">
+                <Button
+                  variant={mobileView === 'editor' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setMobileView('editor')}
+                  className="flex-1 mobile-touch text-xs font-medium"
+                >
+                  ✏️ Editor
+                </Button>
+                <Button
+                  variant={mobileView === 'preview' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setMobileView('preview')}
+                  className="flex-1 mobile-touch text-xs font-medium"
+                >
+                  👁️ Vista
+                </Button>
+                <Button
+                  variant={mobileView === 'files' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setMobileView('files')}
+                  className="flex-1 mobile-touch text-xs font-medium"
+                >
+                  📁 Archivos
+                </Button>
+              </div>
+            </div>
+          ) : (
+            /* Desktop: Barra completa */
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
             {/* Botones de deshacer/rehacer */}
             <div className="tour-undo-redo flex items-center space-x-2">
               <Button 
@@ -964,15 +1083,302 @@ function saludar(nombre) {
             >
               <HelpCircle className="h-4 w-4" />
             </Button>
-          </div>
+              </div>
+            </div>
+          )}
+          
+          {/* Menú móvil expandible */}
+          {isMobile && mobileMenuOpen && (
+            <div className="mt-3 p-3 bg-white rounded-lg border shadow-lg">
+              {/* Sección: Deshacer/Rehacer */}
+              <div className="mb-4">
+                <h4 className="text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">Historial</h4>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={undo} 
+                    disabled={!canUndo} 
+                    className="mobile-touch flex items-center justify-center space-x-1 py-2"
+                  >
+                    <Undo className="h-4 w-4" />
+                    <span className="text-xs">Deshacer</span>
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={redo} 
+                    disabled={!canRedo} 
+                    className="mobile-touch flex items-center justify-center space-x-1 py-2"
+                  >
+                    <Redo className="h-4 w-4" />
+                    <span className="text-xs">Rehacer</span>
+                  </Button>
+                </div>
+              </div>
+
+              {/* Sección: Formato de texto */}
+              <div className="mb-4">
+                <h4 className="text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">Formato</h4>
+                <div className="grid grid-cols-2 gap-2 mb-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={toggleBold} 
+                    className="mobile-touch flex items-center justify-center space-x-1 py-2"
+                  >
+                    <Bold className="h-4 w-4" />
+                    <span className="text-xs">Negrita</span>
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={toggleItalic} 
+                    className="mobile-touch flex items-center justify-center space-x-1 py-2"
+                  >
+                    <Italic className="h-4 w-4" />
+                    <span className="text-xs">Cursiva</span>
+                  </Button>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => makeHeader(1)} 
+                    className="mobile-touch py-2 text-xs font-bold"
+                  >
+                    H1
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => makeHeader(2)} 
+                    className="mobile-touch py-2 text-xs font-semibold"
+                  >
+                    H2
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => makeHeader(3)} 
+                    className="mobile-touch py-2 text-xs font-medium"
+                  >
+                    H3
+                  </Button>
+                </div>
+              </div>
+
+              {/* Sección: Listas y elementos */}
+              <div className="mb-4">
+                <h4 className="text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">Elementos</h4>
+                <div className="grid grid-cols-2 gap-2 mb-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={addList} 
+                    className="mobile-touch flex items-center justify-center space-x-1 py-2"
+                  >
+                    <List className="h-4 w-4" />
+                    <span className="text-xs">Lista</span>
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={addOrderedList} 
+                    className="mobile-touch flex items-center justify-center space-x-1 py-2"
+                  >
+                    <ListOrdered className="h-4 w-4" />
+                    <span className="text-xs">Numerada</span>
+                  </Button>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={addLink} 
+                    className="mobile-touch flex items-center justify-center space-x-1 py-2"
+                  >
+                    <LinkIcon className="h-4 w-4" />
+                    <span className="text-xs">Enlace</span>
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={addQuote} 
+                    className="mobile-touch flex items-center justify-center space-x-1 py-2"
+                  >
+                    <Quote className="h-4 w-4" />
+                    <span className="text-xs">Cita</span>
+                  </Button>
+                </div>
+              </div>
+
+              {/* Sección: Archivos */}
+              <div>
+                <h4 className="text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">Archivos</h4>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={handleExport} 
+                    className="mobile-touch flex items-center justify-center space-x-1 py-2"
+                  >
+                    <Download className="h-4 w-4" />
+                    <span className="text-xs">Exportar</span>
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={handleImport} 
+                    className="mobile-touch flex items-center justify-center space-x-1 py-2"
+                  >
+                    <Upload className="h-4 w-4" />
+                    <span className="text-xs">Importar</span>
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Área principal */}
-      <div className="flex-1 flex">
-        {/* Editor */}
-        <div className={`flex-1 ${showPreview ? 'w-1/2' : sidebarCollapsed ? 'w-full' : 'w-3/4'} relative`}>
-          <Card className="h-full m-4 tour-editor">
+      <div className="flex-1 flex relative">
+        {/* Móvil: Vista única basada en mobileView */}
+        {isMobile ? (
+          <div className="w-full h-full flex flex-col">
+            {/* Editor móvil */}
+            {mobileView === 'editor' && (
+              <div className="flex-1 relative">
+                <Card className="h-full m-2 tour-editor">
+                  <div className="relative h-full">
+                    <div className="relative w-full h-full">
+                      <Textarea
+                        ref={textareaRef}
+                        value={markdownContent}
+                        onChange={handleTextareaChange}
+                        onSelect={handleCursorPositionChange}
+                        onKeyUp={handleCursorPositionChange}
+                        onMouseUp={handleCursorPositionChange}
+                        placeholder="Escribe tu contenido en Markdown aquí..."
+                        className="w-full h-full border-none resize-none focus:ring-0 font-mono text-base leading-6 p-3 relative z-10 bg-transparent mobile-text"
+                        style={{ minHeight: 'calc(100vh - 120px)', fontSize: '16px' }}
+                      />
+                      
+                      {/* Ghost text para autocompletado */}
+                      {currentSuggestion && (
+                        <div
+                          ref={ghostTextRef}
+                          className="absolute top-0 left-0 w-full h-full p-3 font-mono text-sm leading-6 pointer-events-none z-5"
+                          style={{ 
+                            color: 'rgba(107, 114, 126, 0.6)',
+                            whiteSpace: 'pre-wrap',
+                            wordWrap: 'break-word'
+                          }}
+                        >
+                          <span style={{ opacity: 0 }}>
+                            {markdownContent.substring(0, textareaRef.current?.selectionStart || 0)}
+                          </span>
+                          <span style={{ color: 'rgba(107, 114, 126, 0.6)' }}>
+                            {currentSuggestion}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </Card>
+              </div>
+            )}
+
+            {/* Vista previa móvil */}
+            {mobileView === 'preview' && (
+              <div className="flex-1 tour-preview">
+                <Card className="h-full m-2 p-0">
+                  <div 
+                    className="preview-content prose prose-sm max-w-none h-full p-4 overflow-y-auto mobile-scroll"
+                    style={{ minHeight: 'calc(100vh - 120px)' }}
+                    dangerouslySetInnerHTML={{ __html: previewContent }}
+                  />
+                </Card>
+              </div>
+            )}
+
+            {/* Archivos móvil */}
+            {mobileView === 'files' && (
+              <div className="flex-1 tour-file-sidebar">
+                <div className="h-full m-2">
+                  <Card className="h-full">
+                    <div className="h-full overflow-hidden">
+                      <div className="p-4 border-b border-gray-200">
+                        <h3 className="font-semibold text-gray-900">Archivos Guardados</h3>
+                      </div>
+                      
+                      <div className="flex-1 overflow-y-auto p-2 space-y-2 mobile-scroll" style={{ maxHeight: 'calc(100vh - 160px)' }}>
+                        {savedFiles.length === 0 ? (
+                          <div className="text-center py-8 text-gray-500">
+                            <div className="text-4xl mb-2">📝</div>
+                            <p className="text-sm">No hay archivos guardados</p>
+                            <p className="text-xs mt-1">Guarda tu primer artículo</p>
+                          </div>
+                        ) : (
+                          savedFiles
+                            .sort((a, b) => b.updatedAt - a.updatedAt)
+                            .map((file) => (
+                              <Card
+                                key={file.id}
+                                className={`p-3 cursor-pointer transition-all hover:shadow-md mobile-touch ${
+                                  currentFileId === file.id 
+                                    ? 'ring-2 ring-blue-500 bg-blue-50' 
+                                    : 'hover:bg-gray-50'
+                                }`}
+                                onClick={() => handleFileSelect(file)}
+                              >
+                                <div className="flex items-start justify-between">
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center space-x-2 mb-1">
+                                      <div className="text-blue-600 text-lg">📄</div>
+                                      <h4 className="font-medium text-sm text-gray-900 truncate">
+                                        {file.title}
+                                      </h4>
+                                    </div>
+                                    
+                                    <div className="flex items-center space-x-1 text-xs text-gray-500 mb-2">
+                                      <span>📅</span>
+                                      <span>{new Date(file.updatedAt).toLocaleDateString('es-ES')}</span>
+                                    </div>
+                                    
+                                    <p className="text-xs text-gray-600 line-clamp-2">
+                                      {file.content.substring(0, 80)}
+                                      {file.content.length > 80 ? '...' : ''}
+                                    </p>
+                                  </div>
+                                  
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleFileDelete(file.id);
+                                    }}
+                                    className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded mobile-touch"
+                                  >
+                                    🗑️
+                                  </button>
+                                </div>
+                              </Card>
+                            ))
+                        )}
+                      </div>
+                    </div>
+                  </Card>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          /* Desktop: Layout original */
+          <>
+            {/* Editor */}
+            <div className={`${showPreview ? 'w-1/2' : sidebarCollapsed ? 'flex-1' : 'flex-1'} relative`}>
+              <Card className="h-full m-4 tour-editor">
             <div className="relative h-full">
               <div className="relative w-full h-full">
                 <Textarea
@@ -1013,29 +1419,31 @@ function saludar(nombre) {
           </Card>
         </div>
 
-        {/* Vista previa */}
-        {showPreview && (
-          <div className="w-1/2 tour-preview">
-            <Card className="h-full m-4 p-0">
-              <div 
-                className="preview-content prose prose-sm max-w-none h-full"
-                dangerouslySetInnerHTML={{ __html: previewContent }}
-              />
-            </Card>
-          </div>
-        )}
+            {/* Vista previa desktop */}
+            {showPreview && (
+              <div className="w-1/2 tour-preview">
+                <Card className="h-full m-4 p-0">
+                  <div 
+                    className="preview-content prose prose-sm max-w-none h-full overflow-y-auto"
+                    dangerouslySetInnerHTML={{ __html: previewContent }}
+                  />
+                </Card>
+              </div>
+            )}
 
-        {/* Sidebar de archivos */}
-        <div className="tour-file-sidebar">
-          <FileSidebar
-            files={savedFiles}
-            currentFileId={currentFileId}
-            onFileSelect={handleFileSelect}
-            onFileDelete={handleFileDelete}
-            isCollapsed={sidebarCollapsed}
-            onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
-          />
-        </div>
+            {/* Sidebar de archivos desktop */}
+            <div className={`tour-file-sidebar ${sidebarCollapsed ? 'w-12' : 'w-80'} flex-shrink-0`}>
+              <FileSidebar
+                files={savedFiles}
+                currentFileId={currentFileId}
+                onFileSelect={handleFileSelect}
+                onFileDelete={handleFileDelete}
+                isCollapsed={sidebarCollapsed}
+                onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+              />
+            </div>
+          </>
+        )}
       </div>
 
       {/* Sugerencias de artículos */}

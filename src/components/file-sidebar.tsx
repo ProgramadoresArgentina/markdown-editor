@@ -82,8 +82,8 @@ export function FileSidebar({
   return (
     <>
       <div className={`bg-white border-l border-gray-200 transition-all duration-300 ${
-        isCollapsed ? 'w-12' : 'w-80'
-      } flex flex-col`}>
+        isCollapsed ? 'w-full' : 'w-full'
+      } flex flex-col h-full`}>
         {/* Header del sidebar */}
         <div className="p-4 border-b border-gray-200 flex items-center justify-between">
           {!isCollapsed && (
