@@ -1,26 +1,822 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:is(.dark *));
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+:root {
+  --radius: 0.625rem;
+  
+  /* Paleta de colores personalizada */
+  --portland-orange: #FC5A31;
+  --magic-mint: #B7FCBF;
+  --columbia-blue: #C7DDDC;
+  --rich-black: #004638;
+  --pale-violet: #D199F9;
+  --maximum-green-yellow: #DCED59;
+  
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: var(--portland-orange);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: var(--magic-mint);
+  --secondary-foreground: var(--rich-black);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: var(--columbia-blue);
+  --accent-foreground: var(--rich-black);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: var(--portland-orange);
+  --chart-1: var(--portland-orange);
+  --chart-2: var(--magic-mint);
+  --chart-3: var(--columbia-blue);
+  --chart-4: var(--pale-violet);
+  --chart-5: var(--maximum-green-yellow);
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: var(--portland-orange);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: var(--magic-mint);
+  --sidebar-accent-foreground: var(--rich-black);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: var(--portland-orange);
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Estilos para el editor de markdown */
+.ProseMirror {
+  outline: none;
+  padding: 1rem;
+  min-height: 500px;
+  background-color: #fafafa;
+  border: 1px solid #e5e5e5;
+  border-radius: 0.5rem;
+  font-family: 'Inter', system-ui, sans-serif;
+  line-height: 1.6;
+}
+
+/* Estilos específicos para el editor (lado izquierdo) */
+.ProseMirror h1,
+.ProseMirror h2,
+.ProseMirror h3,
+.ProseMirror h4,
+.ProseMirror h5,
+.ProseMirror h6 {
+  color: var(--rich-black);
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.ProseMirror h1 {
+  font-size: 1.875rem;
+  border-bottom: 2px solid var(--portland-orange);
+  padding-bottom: 0.5rem;
+}
+
+.ProseMirror h2 {
+  font-size: 1.5rem;
+  border-bottom: 1px solid var(--columbia-blue);
+  padding-bottom: 0.25rem;
+}
+
+.ProseMirror h3 {
+  font-size: 1.25rem;
+  color: var(--portland-orange);
+}
+
+.ProseMirror p {
+  margin: 0.75rem 0;
+  color: #374151;
+}
+
+.ProseMirror strong {
+  color: var(--rich-black);
+  font-weight: 600;
+}
+
+.ProseMirror em {
+  color: var(--portland-orange);
+  font-style: italic;
+}
+
+.ProseMirror code {
+  background-color: var(--magic-mint);
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-family: 'Monaco', 'Menlo', monospace;
+  font-size: 0.875rem;
+  color: var(--rich-black);
+}
+
+.ProseMirror pre {
+  background-color: var(--rich-black);
+  color: white;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  margin: 1rem 0;
+}
+
+.ProseMirror pre code {
+  background-color: transparent;
+  padding: 0;
+  color: inherit;
+}
+
+.ProseMirror blockquote {
+  border-left: 4px solid var(--portland-orange);
+  padding-left: 1rem;
+  margin: 1rem 0;
+  font-style: italic;
+  color: var(--rich-black);
+  background-color: #f9f9f9;
+  padding: 1rem;
+  border-radius: 0.25rem;
+}
+
+.ProseMirror ul,
+.ProseMirror ol {
+  margin: 1rem 0;
+  padding-left: 2rem;
+}
+
+.ProseMirror li {
+  margin: 0.25rem 0;
+  color: #374151;
+}
+
+.ProseMirror table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1rem 0;
+  border: 1px solid var(--columbia-blue);
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.ProseMirror th,
+.ProseMirror td {
+  border: 1px solid var(--columbia-blue);
+  padding: 0.5rem;
+  text-align: left;
+}
+
+.ProseMirror th {
+  background-color: var(--magic-mint);
+  font-weight: 600;
+  color: var(--rich-black);
+}
+
+.ProseMirror tr:nth-child(even) {
+  background-color: #f8f9fa;
+}
+
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: #adb5bd;
+  pointer-events: none;
+  height: 0;
+}
+
+/* Estilos para corrección ortográfica */
+.spell-error {
+  text-decoration: wavy underline #DCED59;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 2px;
+}
+
+/* Estilos para enlaces */
+.ProseMirror a {
+  color: var(--portland-orange);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.ProseMirror a:hover {
+  color: var(--rich-black);
+}
+
+/* Estilos para botones personalizados */
+.btn-portland-orange {
+  background-color: var(--portland-orange);
+  color: white;
+}
+
+.btn-portland-orange:hover {
+  background-color: #e04a2a;
+}
+
+.btn-magic-mint {
+  background-color: var(--magic-mint);
+  color: var(--rich-black);
+}
+
+.btn-magic-mint:hover {
+  background-color: #a3f5a8;
+}
+
+/* Estilos para sugerencias de autocompletado con ghost text */
+.ghost-text {
+  color: rgba(107, 114, 126, 0.6);
+  pointer-events: none;
+  user-select: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  padding: inherit;
+  margin: inherit;
+  z-index: 1;
+}
+
+.editor-container {
+  position: relative;
+}
+
+.editor-textarea {
+  position: relative;
+  z-index: 2;
+  background: transparent;
+}
+
+/* Sugerencias de autocompletado tradicionales (fallback) */
+.suggestion-item {
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.suggestion-item:hover {
+  background-color: var(--magic-mint);
+}
+
+.suggestion-item.selected {
+  background-color: var(--portland-orange);
+  color: white;
+}
+
+/* Estilos para la barra de herramientas */
+.toolbar-button {
+  transition: all 0.2s;
+}
+
+.toolbar-button:hover {
+  background-color: var(--columbia-blue);
+}
+
+.toolbar-button.active {
+  background-color: var(--portland-orange);
+  color: white;
+}
+
+/* Estilos específicos para contenido Markdown de blogs en modo oscuro */
+.preview-content {
+  color: #ffffff;
+  line-height: 1.7;
+  font-size: 16px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background-color: #1a1a1a;
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  overflow-y: auto;
+}
+
+/* Títulos */
+.preview-content h1 {
+  color: #ffffff;
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin: 0 0 1.5rem 0;
+  line-height: 1.2;
+  border-bottom: 2px solid rgba(208, 255, 113, 0.3);
+  padding-bottom: 0.5rem;
+  position: relative;
+}
+
+.preview-content h1:not(:first-child) {
+  margin-top: 2rem;
+}
+
+.preview-content h1::before {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 60px;
+  height: 2px;
+  background: #D0FF71;
+  border-radius: 1px;
+}
+
+.preview-content h2 {
+  color: #ffffff;
+  font-size: 2rem;
+  font-weight: 600;
+  margin: 1.8rem 0 1.2rem 0;
+  line-height: 1.3;
+  border-bottom: 1px solid rgba(208, 255, 113, 0.2);
+  padding-bottom: 0.3rem;
+  position: relative;
+}
+
+.preview-content h2::before {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 40px;
+  height: 1px;
+  background: #D0FF71;
+  border-radius: 1px;
+}
+
+.preview-content h3 {
+  color: #ffffff;
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 1.5rem 0 1rem 0;
+  line-height: 1.4;
+  position: relative;
+  padding-left: 1rem;
+}
+
+.preview-content h3::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 20px;
+  background: #D0FF71;
+  border-radius: 2px;
+}
+
+.preview-content h4 {
+  color: #ffffff;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 1.2rem 0 0.8rem 0;
+  line-height: 1.4;
+}
+
+.preview-content h5 {
+  color: #ffffff;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 1rem 0 0.6rem 0;
+  line-height: 1.4;
+}
+
+.preview-content h6 {
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0.8rem 0 0.5rem 0;
+  line-height: 1.4;
+  color: rgba(208, 255, 113, 0.8);
+}
+
+/* Párrafos */
+.preview-content p {
+  color: rgba(255, 255, 255, 0.9);
+  margin: 1rem 0;
+  line-height: 1.7;
+  text-align: justify;
+}
+
+/* Listas */
+.preview-content ul,
+.preview-content ol {
+  color: rgba(255, 255, 255, 0.9);
+  margin: 1rem 0;
+  padding-left: 2rem;
+}
+
+.preview-content li {
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0.5rem 0;
+  line-height: 1.6;
+  position: relative;
+}
+
+.preview-content ul li {
+  list-style-type: none;
+}
+
+.preview-content ul li::before {
+  content: '▸';
+  color: #D0FF71;
+  font-weight: bold;
+  position: absolute;
+  left: -1.5rem;
+}
+
+.preview-content ol li {
+  list-style-type: decimal;
+  list-style-position: outside;
+}
+
+.preview-content ul ul,
+.preview-content ol ol,
+.preview-content ul ol,
+.preview-content ol ul {
+  margin: 0.5rem 0;
+}
+
+.preview-content ul ul li::before {
+  content: '▪';
+  color: rgba(208, 255, 113, 0.7);
+}
+
+.preview-content ul ul ul li::before {
+  content: '▫';
+  color: rgba(208, 255, 113, 0.5);
+}
+
+/* Código */
+.preview-content code {
+  background: rgba(208, 255, 113, 0.1);
+  color: #D0FF71;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  font-family: 'Fira Code', 'Courier New', monospace;
+  font-size: 0.9em;
+  border: 1px solid rgba(208, 255, 113, 0.2);
+  font-weight: 500;
+}
+
+.preview-content pre {
+  background: rgba(14, 15, 17, 0.9);
+  color: #ffffff;
+  padding: 1.5rem;
+  border-radius: 12px;
+  margin: 1.5rem 0;
+  overflow-x: auto;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  position: relative;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.preview-content pre::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #D0FF71, #00ff88, #D0FF71);
+  border-radius: 12px 12px 0 0;
+}
+
+.preview-content pre code {
+  background: transparent;
+  color: #ffffff;
+  padding: 0;
+  border: none;
+  font-size: 0.9em;
+  line-height: 1.5;
+  font-family: 'Fira Code', 'Courier New', monospace;
+}
+
+/* Citas */
+.preview-content blockquote {
+  border-left: 4px solid #D0FF71;
+  padding: 1.5rem 2rem;
+  margin: 2rem 0;
+  background: rgba(208, 255, 113, 0.05);
+  border-radius: 0 12px 12px 0;
+  color: rgba(255, 255, 255, 0.8);
+  font-style: italic;
+  position: relative;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.preview-content blockquote::before {
+  content: '"';
+  font-size: 4rem;
+  color: rgba(208, 255, 113, 0.2);
+  position: absolute;
+  top: -0.5rem;
+  left: 1rem;
+  font-family: serif;
+  line-height: 1;
+}
+
+.preview-content blockquote p {
+  margin: 0;
+  position: relative;
+  z-index: 1;
+}
+
+/* Enlaces */
+.preview-content a {
+  color: #D0FF71;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(208, 255, 113, 0.3);
+  transition: all 0.3s ease;
+  padding-bottom: 1px;
+  position: relative;
+}
+
+.preview-content a:hover {
+  color: #ffffff;
+  border-bottom-color: #D0FF71;
+  background: rgba(208, 255, 113, 0.1);
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  margin: 0 -0.4rem;
+  transform: translateY(-1px);
+}
+
+/* Imágenes */
+.preview-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 12px;
+  margin: 2rem 0;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease;
+  cursor: pointer;
+}
+
+.preview-content img:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+  opacity: 0.9;
+}
+
+/* Tablas */
+.preview-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 2rem 0;
+  background: rgba(14, 15, 17, 0.6);
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.preview-content th,
+.preview-content td {
+  padding: 1rem 1.5rem;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.preview-content th {
+  background: rgba(208, 255, 113, 0.1);
+  font-weight: 600;
+  color: #ffffff;
+  border-bottom: 2px solid rgba(208, 255, 113, 0.3);
+  text-transform: uppercase;
+  font-size: 0.9em;
+  letter-spacing: 0.5px;
+}
+
+.preview-content tr:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.preview-content tr:last-child td {
+  border-bottom: none;
+}
+
+/* Líneas horizontales */
+.preview-content hr {
+  border: none;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(208, 255, 113, 0.3), transparent);
+  margin: 3rem 0;
+  border-radius: 1px;
+  position: relative;
+}
+
+.preview-content hr::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 60px;
+  height: 2px;
+  background: #D0FF71;
+  border-radius: 1px;
+}
+
+/* Texto fuerte y enfatizado */
+.preview-content strong {
+  color: #ffffff;
+  font-weight: 700;
+  position: relative;
+}
+
+.preview-content strong::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: rgba(208, 255, 113, 0.3);
+  border-radius: 1px;
+}
+
+.preview-content em {
+  color: rgba(255, 255, 255, 0.8);
+  font-style: italic;
+}
+
+/* Texto tachado */
+.preview-content del {
+  color: rgba(255, 255, 255, 0.5);
+  text-decoration: line-through;
+  text-decoration-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Texto marcado */
+.preview-content mark {
+  background: rgba(208, 255, 113, 0.2);
+  color: #ffffff;
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  border: 1px solid rgba(208, 255, 113, 0.3);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .preview-content {
+    font-size: 14px;
+  }
+  
+  .preview-content h1 {
+    font-size: 2rem;
+  }
+  
+  .preview-content h2 {
+    font-size: 1.5rem;
+  }
+  
+  .preview-content h3 {
+    font-size: 1.25rem;
+  }
+  
+  .preview-content pre {
+    padding: 1rem;
+    font-size: 0.8em;
+    border-radius: 8px;
+  }
+  
+  .preview-content table {
+    font-size: 0.9em;
+    border-radius: 8px;
+  }
+  
+  .preview-content th,
+  .preview-content td {
+    padding: 0.75rem 0.5rem;
+  }
+  
+  .preview-content blockquote {
+    padding: 1rem 1.5rem;
+    border-radius: 0 8px 8px 0;
+  }
+  
+  .preview-content blockquote::before {
+    font-size: 3rem;
+  }
+  
+  .preview-content img {
+    border-radius: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .preview-content {
+    font-size: 13px;
+  }
+  
+  .preview-content h1 {
+    font-size: 1.75rem;
+  }
+  
+  .preview-content h2 {
+    font-size: 1.35rem;
+  }
+  
+  .preview-content h3 {
+    font-size: 1.15rem;
+  }
+  
+  .preview-content pre {
+    padding: 0.75rem;
+    font-size: 0.75em;
+  }
+  
+  .preview-content blockquote {
+    padding: 0.75rem 1rem;
+  }
+  
+  .preview-content blockquote::before {
+    font-size: 2.5rem;
+  }
 }

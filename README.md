@@ -1,36 +1,150 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Markdown AI Editor
 
-## Getting Started
+Un editor de texto enriquecido en Markdown con mejoras de IA, construido con Next.js, Tiptap y shadcn/ui.
 
-First, run the development server:
+## ✨ Características
 
+- **Pantalla dividida**: Editor a la izquierda, vista previa a la derecha
+- **Autocompletado inteligente**: Sugerencias basadas en el contexto de palabras anteriores
+- **Corrección ortográfica**: Errores marcados con línea amarilla ondulada
+- **Soporte completo de Markdown**: Headers, listas, enlaces, imágenes, tablas, código, etc.
+- **Interfaz moderna**: Diseño inspirado en la paleta de colores proporcionada
+- **Iconos de Lucide**: Iconografía consistente y moderna
+- **Tema naranja**: Configurado con el color Portland Orange (#FC5A31)
+
+## ��� Instalación
+
+1. Clona el repositorio:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone <tu-repositorio>
+cd markdown-editor
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Instala las dependencias:
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. Ejecuta el servidor de desarrollo:
+```bash
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+4. Abre [http://localhost:3000](http://localhost:3000) en tu navegador.
 
-## Learn More
+## ��� Paleta de Colores
 
-To learn more about Next.js, take a look at the following resources:
+El editor utiliza la siguiente paleta de colores:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **Portland Orange**: #FC5A31 (Color principal)
+- **Magic Mint**: #B7FCBF (Color de acento)
+- **Columbia Blue**: #C7DDDC
+- **Rich Black**: #004638
+- **Pale Violet**: #D199F9
+- **Maximum Green Yellow**: #DCED59 (Para corrección ortográfica)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## ���️ Tecnologías Utilizadas
 
-## Deploy on Vercel
+- **Next.js 15**: Framework de React
+- **TypeScript**: Tipado estático
+- **Tiptap**: Editor de texto enriquecido
+- **shadcn/ui**: Componentes de interfaz
+- **Tailwind CSS**: Estilos utilitarios
+- **Lucide React**: Iconos
+- **Radix UI**: Componentes primitivos accesibles
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## ��� Uso
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Autocompletado
+- Escribe algunas palabras y presiona **TAB** para aceptar sugerencias
+- Usa las flechas **↑↓** para navegar entre sugerencias
+- Presiona **ESC** para cerrar las sugerencias
+
+### Corrección Ortográfica
+- Los errores ortográficos se marcan automáticamente con una línea amarilla ondulada
+- Pasa el cursor sobre las palabras marcadas para ver sugerencias
+
+### Atajos de Teclado
+- **Ctrl+B**: Negrita
+- **Ctrl+I**: Cursiva
+- **Ctrl+U**: Subrayado
+- **Ctrl+Shift+S**: Tachado
+- **Ctrl+`**: Código inline
+- **Ctrl+Shift+`**: Bloque de código
+
+### Funciones de Archivo
+- **Guardar**: Guarda el contenido actual
+- **Exportar**: Descarga el archivo como .md
+- **Importar**: Carga un archivo .md existente
+
+## ��� Características de IA
+
+### Autocompletado Contextual
+El editor analiza el contexto de las palabras anteriores para sugerir:
+- Palabras similares usadas previamente
+- Elementos comunes de Markdown
+- Patrones de escritura del usuario
+
+### Corrección Ortográfica Inteligente
+- Detección automática de errores ortográficos
+- Diccionario en español integrado
+- Sugerencias de corrección contextual
+- Exclusión de palabras técnicas y nombres propios
+
+## ��� Personalización
+
+### Colores
+Los colores se pueden personalizar en `src/app/globals.css`:
+
+```css
+:root {
+  --portland-orange: #FC5A31;
+  --magic-mint: #B7FCBF;
+  /* ... más colores */
+}
+```
+
+### Fuentes
+Las fuentes se configuran en `tailwind.config.ts`:
+
+```typescript
+fontFamily: {
+  sans: ["var(--font-aktiv)", "Inter", "system-ui", "sans-serif"],
+  mono: ["var(--font-mono)", "monospace"],
+}
+```
+
+## ��� Estructura del Proyecto
+
+```
+src/
+├── app/
+│   ├── globals.css          # Estilos globales y variables CSS
+│   ├── layout.tsx           # Layout principal
+│   └── page.tsx             # Página principal
+├── components/
+│   ├── ui/                  # Componentes de shadcn/ui
+│   ├── markdown-editor.tsx  # Editor principal
+│   └── spell-checker.tsx    # Corrector ortográfico
+└── lib/
+    └── utils.ts             # Utilidades
+```
+
+## ��� Contribuir
+
+1. Fork el proyecto
+2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
+3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
+4. Push a la rama (`git push origin feature/AmazingFeature`)
+5. Abre un Pull Request
+
+## ��� Licencia
+
+Este proyecto está bajo la Licencia MIT. Ver `LICENSE` para más detalles.
+
+## ��� Agradecimientos
+
+- [Tiptap](https://tiptap.dev/) por el excelente editor
+- [shadcn/ui](https://ui.shadcn.com/) por los componentes
+- [Lucide](https://lucide.dev/) por los iconos
+- [Next.js](https://nextjs.org/) por el framework
