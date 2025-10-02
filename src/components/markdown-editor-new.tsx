@@ -7,6 +7,7 @@ import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { marked } from 'marked';
 import { ArticleSuggestions, useArticleSuggestions } from './article-suggestions';
+import { ArticleMetadataForm, useArticleMetadata, type ArticleMetadata } from './article-metadata-form';
 import { 
   Bold, 
   Italic, 
@@ -40,6 +41,9 @@ export default function MarkdownEditor({ className }: MarkdownEditorProps) {
   
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const ghostTextRef = useRef<HTMLDivElement>(null);
+  
+  // Hook para metadatos del artículo
+  const { metadata, setMetadata } = useArticleMetadata();
   
   // Hook para sugerencias de artículos
   const {
@@ -365,13 +369,38 @@ export default function MarkdownEditor({ className }: MarkdownEditorProps) {
     }
   };
 
+  // Función para generar frontmatter
+  const generateFrontmatter = (metadata: ArticleMetadata) => {
+    return `---
+title: "${metadata.title}"
+description: "${metadata.description}"
+date: "${metadata.date}"
+author: "${metadata.author}"
+category: "${metadata.category}"
+image: "${metadata.image}"
+isPublic: ${metadata.isPublic}
+excerpt: "${metadata.excerpt}"
+---
+
+`;
+  };
+
   // Funciones para archivos
   const saveFile = () => {
-    const blob = new Blob([markdownContent], { type: 'text/markdown' });
+    // Incluir frontmatter si los metadatos están completos
+    const isMetadataComplete = metadata.title && metadata.description && metadata.date && 
+                              metadata.author && metadata.category && metadata.image && metadata.excerpt;
+    
+    let content = markdownContent;
+    if (isMetadataComplete) {
+      content = generateFrontmatter(metadata) + markdownContent;
+    }
+    
+    const blob = new Blob([content], { type: 'text/markdown' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'documento.md';
+    a.download = metadata.title ? `${metadata.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.md` : 'documento.md';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -383,7 +412,7 @@ export default function MarkdownEditor({ className }: MarkdownEditorProps) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'documento.html';
+    a.download = metadata.title ? `${metadata.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.html` : 'documento.html';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -535,6 +564,10 @@ export default function MarkdownEditor({ className }: MarkdownEditorProps) {
           
           {/* Botones de archivo - ocultos en móviles muy pequeños */}
           <div className="hidden xs:flex items-center space-x-1">
+            <ArticleMetadataForm
+              metadata={metadata}
+              onMetadataChange={setMetadata}
+            />
             <Button
               variant="ghost"
               size="sm"

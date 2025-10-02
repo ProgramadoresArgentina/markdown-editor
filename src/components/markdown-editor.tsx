@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/dialog';
 import { marked } from 'marked';
 import { ArticleSuggestions, useArticleSuggestions } from '@/components/article-suggestions';
+import { ArticleMetadataForm, useArticleMetadata, type ArticleMetadata } from '@/components/article-metadata-form';
 import { FileSidebar } from '@/components/file-sidebar';
 import { TourGuide } from '@/components/tour-guide';
 import { FileManager, type SavedFile } from '@/lib/file-manager';
@@ -139,6 +140,9 @@ function saludar(nombre) {
     startTour,
     completeTour
   } = useTour();
+  
+  // Hook para metadatos del artículo
+  const { metadata, setMetadata } = useArticleMetadata();
 
   // Funciones para deshacer/rehacer
   const addToHistory = useCallback((content: string) => {
@@ -850,12 +854,37 @@ function saludar(nombre) {
     };
   }, []);
 
+  // Función para generar frontmatter
+  const generateFrontmatter = (metadata: ArticleMetadata) => {
+    return `---
+title: "${metadata.title}"
+description: "${metadata.description}"
+date: "${metadata.date}"
+author: "${metadata.author}"
+category: "${metadata.category}"
+image: "${metadata.image}"
+isPublic: ${metadata.isPublic}
+excerpt: "${metadata.excerpt}"
+---
+
+`;
+  };
+
   const handleExport = () => {
-    const blob = new Blob([markdownContent], { type: 'text/markdown' });
+    // Incluir frontmatter si los metadatos están completos
+    const isMetadataComplete = metadata.title && metadata.description && metadata.date && 
+                              metadata.author && metadata.category && metadata.image && metadata.excerpt;
+    
+    let content = markdownContent;
+    if (isMetadataComplete) {
+      content = generateFrontmatter(metadata) + markdownContent;
+    }
+    
+    const blob = new Blob([content], { type: 'text/markdown' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'article.md';
+    a.download = metadata.title ? `${metadata.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.md` : 'article.md';
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -1045,6 +1074,10 @@ function saludar(nombre) {
           
           <div className="flex items-center space-x-2">
             <div className="tour-save-buttons flex items-center space-x-2">
+              <ArticleMetadataForm
+                metadata={metadata}
+                onMetadataChange={setMetadata}
+              />
               <Button variant="outline" size="sm" onClick={handleSave}>
                 <Save className="h-4 w-4 mr-2" />
                 {currentFileId ? 'Actualizar' : 'Guardar'}
@@ -1217,6 +1250,12 @@ function saludar(nombre) {
               <div>
                 <h4 className="text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">Archivos</h4>
                 <div className="grid grid-cols-2 gap-2">
+                  <div className="flex items-center">
+                    <ArticleMetadataForm
+                      metadata={metadata}
+                      onMetadataChange={setMetadata}
+                    />
+                  </div>
                   <Button 
                     variant="outline" 
                     size="sm" 

@@ -11,7 +11,7 @@ export function useTour() {
   // Verificar si el usuario ya vio el tour
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const hasSeenTour = sessionStorage.getItem(TOUR_STORAGE_KEY);
+      const hasSeenTour = localStorage.getItem(TOUR_STORAGE_KEY);
       if (!hasSeenTour) {
         // Si es la primera vez, mostrar el tour después de un pequeño delay
         const timer = setTimeout(() => {
@@ -37,13 +37,13 @@ export function useTour() {
     setRunTour(false);
     setTourCompleted(true);
     if (typeof window !== 'undefined') {
-      sessionStorage.setItem(TOUR_STORAGE_KEY, 'true');
+      localStorage.setItem(TOUR_STORAGE_KEY, 'true');
     }
   }, []);
 
   const resetTour = useCallback(() => {
     if (typeof window !== 'undefined') {
-      sessionStorage.removeItem(TOUR_STORAGE_KEY);
+      localStorage.removeItem(TOUR_STORAGE_KEY);
     }
     setTourCompleted(false);
     setRunTour(true);
